@@ -1,13 +1,41 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
-/* Variables de color del sistema */
 @layer base {
   :root {
-    --color-primary: #1d4ed8;
-    --color-primary-dark: #1e40af;
+    --color-page: #eef1f0;
+    --color-surface: #ffffff;
+    --color-surface-alt: #f4f6f5;
+    --color-border: #dadeda;
+    --color-text: #1e2422;
+    --color-muted: #66726e;
+    --color-primary: #c1440e;
+    --color-primary-dark: #9f3509;
+    --color-success: #4c7a6b;
+    --color-warning: #d9a441;
+    --color-danger: #b23a34;
+    --color-graphite: #1a1f1d;
+    --color-graphite-soft: #25312d;
+    --font-sans: 'IBM Plex Sans', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
   }
-  
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-family: var(--font-sans);
+  }
+
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
+    @apply m-0 bg-[var(--color-page)] text-[var(--color-text)] antialiased;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font-family: inherit;
   }
 }

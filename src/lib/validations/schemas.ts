@@ -34,9 +34,10 @@ export const recepcionSchema = z
     cantidad: z.number({ error: 'Ingresá una cantidad válida' }).positive('La cantidad debe ser mayor a 0'),
     unidad: z.string().min(1, 'La unidad es obligatoria'),
     temperatura_recepcion: z.number({ error: 'Temperatura inválida' }).optional().nullable(),
-    estado_organoleptico: z.enum(['ok', 'observado', 'rechazado']).default('ok'),
+    estado_organoleptico: z.enum(['ok', 'observado', 'rechazado']),
     motivo_rechazo: z.string().optional(),
     observaciones: z.string().optional(),
+    remito_url: z.array(z.string()).optional().nullable(),
   })
   .superRefine((data, ctx) => {
     // motivo_rechazo obligatorio si estado = 'rechazado'
@@ -64,8 +65,9 @@ export const documentoSchema = z.object({
     'certificado',
     'otro',
   ]),
-  proveedor_id: z.string().uuid().optional().nullable(),
-  fecha_vencimiento: z.string().optional().nullable(),
+  proveedor_id: z.string().optional().nullable().or(z.literal('')),
+  fecha_vencimiento: z.string().optional().nullable().or(z.literal('')),
+  archivo_url: z.string().optional().nullable().or(z.literal('')),
 })
 
 export type DocumentoFormData = z.infer<typeof documentoSchema>
@@ -85,11 +87,11 @@ export const pasoSchema = z.object({
 
 export const recetaSchema = z.object({
   nombre_producto: z.string().min(1, 'El nombre del producto es obligatorio'),
-  version: z.number().int().positive().default(1),
+  version: z.number().int().positive(),
   ingredientes: z.array(ingredienteSchema).min(1, 'Agregá al menos un ingrediente'),
   pasos: z.array(pasoSchema).min(1, 'Agregá al menos un paso'),
-  parametros_control: z.record(z.string(), z.union([z.string(), z.number()])).default({}),
-  activa: z.boolean().default(true),
+  parametros_control: z.record(z.string(), z.union([z.string(), z.number()])),
+  activa: z.boolean(),
 })
 
 export type RecetaFormData = z.infer<typeof recetaSchema>
