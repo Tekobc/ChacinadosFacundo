@@ -7,8 +7,11 @@ export const proveedorSchema = z.object({
   razon_social: z.string().min(1, 'La razón social es obligatoria'),
   cuit: z
     .string()
-    .min(1, 'El CUIT es obligatorio')
-    .regex(/^\d{2}-\d{8}-\d{1}$/, 'Formato CUIT inválido (ej: 20-12345678-9)'),
+    .optional()
+    .refine(
+      (val) => !val || /^\d{2}-\d{8}-\d{1}$/.test(val),
+      'Formato CUIT inválido (ej: 20-12345678-9)'
+    ),
   contacto_nombre: z.string().optional(),
   contacto_telefono: z.string().optional(),
   contacto_email: z.string().email('Email inválido').optional().or(z.literal('')),

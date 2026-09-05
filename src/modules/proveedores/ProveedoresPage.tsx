@@ -8,7 +8,7 @@ import { proveedorSchema, type ProveedorFormData } from '../../lib/validations/s
 type ProveedorRow = {
   id: string
   razon_social: string
-  cuit: string
+  cuit?: string | null
   contacto_nombre?: string | null
   contacto_telefono?: string | null
   contacto_email?: string | null
@@ -101,6 +101,7 @@ export function ProveedoresPage() {
 
     const payload = {
       ...values,
+      cuit: values.cuit ? values.cuit.trim() : null,
       contacto_email: values.contacto_email || null,
       vencimiento_habilitacion: values.vencimiento_habilitacion || null,
       tipo_insumo: values.tipo_insumo || null,
@@ -131,7 +132,7 @@ export function ProveedoresPage() {
     setEditingId(proveedor.id)
     form.reset({
       razon_social: proveedor.razon_social,
-      cuit: proveedor.cuit,
+      cuit: proveedor.cuit ?? '',
       contacto_nombre: proveedor.contacto_nombre ?? '',
       contacto_telefono: proveedor.contacto_telefono ?? '',
       contacto_email: proveedor.contacto_email ?? '',
@@ -204,6 +205,7 @@ export function ProveedoresPage() {
                     <th className="py-3 pr-4 font-medium">CUIT</th>
                     <th className="py-3 pr-4 font-medium">Tipo</th>
                     <th className="py-3 pr-4 font-medium">Estado</th>
+                    <th className="py-3 pr-4 font-medium">Observaciones</th>
                     <th className="py-3 font-medium text-right">Acciones</th>
                   </tr>
                 </thead>
@@ -214,10 +216,13 @@ export function ProveedoresPage() {
                         <div className="font-medium text-[var(--color-text)]">{proveedor.razon_social}</div>
                         <div className="text-xs text-[var(--color-muted)]">{proveedor.contacto_nombre || 'Sin contacto asignado'}</div>
                       </td>
-                      <td className="py-3 pr-4 font-mono text-xs text-[var(--color-text)]">{proveedor.cuit}</td>
+                      <td className="py-3 pr-4 font-mono text-xs text-[var(--color-text)]">{proveedor.cuit || '—'}</td>
                       <td className="py-3 pr-4 text-[var(--color-muted)]">{proveedor.tipo_insumo || '—'}</td>
                       <td className="py-3 pr-4">
                         <EstadoBadge estado={proveedor.estado} />
+                      </td>
+                      <td className="py-3 pr-4 max-w-xs text-xs text-[var(--color-muted)] truncate" title={proveedor.observaciones || undefined}>
+                        {proveedor.observaciones || '—'}
                       </td>
                       <td className="py-3 text-right">
                         <button
@@ -262,7 +267,7 @@ export function ProveedoresPage() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-[var(--color-text)]">CUIT</label>
+                <label className="mb-1.5 block text-sm font-medium text-[var(--color-text)]">CUIT (opcional)</label>
                 <input {...form.register('cuit')} className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] px-3 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]" placeholder="20-12345678-9" />
                 {form.formState.errors.cuit ? <p className="mt-1 text-xs text-[var(--color-danger)]">{form.formState.errors.cuit.message}</p> : null}
               </div>

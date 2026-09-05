@@ -47,6 +47,7 @@ export function DocumentosPage() {
   const [subiendoArchivo, setSubiendoArchivo] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [filtroCategoria, setFiltroCategoria] = useState<'todos' | DocumentoRow['categoria']>('todos')
+  const [filtroProveedor, setFiltroProveedor] = useState<string>('todos')
 
   const form = useForm<DocumentoFormData>({
     resolver: zodResolver(documentoSchema),
@@ -83,12 +84,18 @@ export function DocumentosPage() {
   }, [])
 
   const documentosFiltrados = useMemo(() => {
-    if (filtroCategoria === 'todos') {
-      return documentos
-    }
+    return documentos.filter((documento) => {
+      const matchCategoria = filtroCategoria === 'todos' || documento.categoria === filtroCategoria
+      const matchProveedor =
+        filtroProveedor === 'todos'
+          ? true
+          : filtroProveedor === 'sin_proveedor'
+          ? !documento.proveedor_id
+          : documento.proveedor_id === filtroProveedor
 
-    return documentos.filter((documento) => documento.categoria === filtroCategoria)
-  }, [documentos, filtroCategoria])
+      return matchCategoria && matchProveedor
+    })
+  }, [documentos, filtroCategoria, filtroProveedor])
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -169,7 +176,7 @@ export function DocumentosPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <label className="flex items-center gap-2 rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-[var(--color-muted)]">
             <Search size={16} />
             <select
@@ -177,7 +184,7 @@ export function DocumentosPage() {
               onChange={(event) => setFiltroCategoria(event.target.value as 'todos' | DocumentoRow['categoria'])}
               className="bg-transparent text-sm text-[var(--color-text)] outline-none"
             >
-              <option value="todos">Todas</option>
+              <option value="todos">Todas las categorías</option>
               <option value="habilitacion_proveedor">Habilitación proveedor</option>
               <option value="procedimiento_interno">Procedimiento interno</option>
               <option value="appcc">APPCC</option>
@@ -188,6 +195,53 @@ export function DocumentosPage() {
           </label>
         </div>
       </div>
+
+      {/* Barra de chips de proveedores para filtrar */}
+      {proveedores.length > 0 ? (
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+          <span className="shrink-0 font-medium text-[var(--color-muted)]">Filtrar proveedor:</span>
+          <button
+            type="button"
+            onClick={() => setFiltroProveedor('todos')}
+            className={`shrink-0 rounded-full px-3 py-1 font-medium transition ${
+              filtroProveedor === 'todos'
+                ? 'bg-[var(--color-primary)] text-white shadow-sm'
+                : 'border border-[var(--color-border)] bg-white text-[var(--color-text)] hover:bg-[var(--color-surface-alt)]'
+            }`}
+          >
+            Todos ({documentos.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setFiltroProveedor('sin_proveedor')}
+            className={`shrink-0 rounded-full px-3 py-1 font-medium transition ${
+              filtroProveedor === 'sin_proveedor'
+                ? 'bg-[var(--color-primary)] text-white shadow-sm'
+                : 'border border-[var(--color-border)] bg-white text-[var(--color-text)] hover:bg-[var(--color-surface-alt)]'
+            }`}
+          >
+            Sin proveedor ({documentos.filter((d) => !d.proveedor_id).length})
+          </button>
+          {proveedores.map((p) => {
+            const count = documentos.filter((d) => d.proveedor_id === p.id).length
+            const active = filtroProveedor === p.id
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setFiltroProveedor(active ? 'todos' : p.id)}
+                className={`shrink-0 rounded-full px-3 py-1 font-medium transition ${
+                  active
+                    ? 'bg-[var(--color-primary)] text-white shadow-sm'
+                    : 'border border-[var(--color-border)] bg-white text-[var(--color-text)] hover:bg-[var(--color-surface-alt)]'
+                }`}
+              >
+                {p.razon_social} {count > 0 ? `(${count})` : ''}
+              </button>
+            )
+          })}
+        </div>
+      ) : null}
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <section className="rounded-2xl border border-[var(--color-border)] bg-white p-4">
@@ -229,7 +283,20 @@ export function DocumentosPage() {
                         </div>
                       </td>
                       <td className="py-3 pr-4 text-[var(--color-muted)]">{categoriaLabels[documento.categoria]}</td>
-                      <td className="py-3 pr-4 text-[var(--color-muted)]">{documento.proveedores?.razon_social ?? 'Sin proveedor'}</td>
+                      <td className="py-3 pr-4 text-[var(--color-muted)]">
+                        {documento.proveedores ? (
+                          <button
+                            type="button"
+                            onClick={() => setFiltroProveedor(documento.proveedor_id || 'todos')}
+                            className="text-left font-medium text-[var(--color-primary)] hover:underline"
+                            title="Filtrar por este proveedor"
+                          >
+                            {documento.proveedores.razon_social}
+                          </button>
+                        ) : (
+                          'Sin proveedor'
+                        )}
+                      </td>
                       <td className="py-3 pr-4 font-mono text-xs text-[var(--color-text)]">
                         {documento.fecha_vencimiento ? new Date(documento.fecha_vencimiento).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'}
                       </td>
@@ -287,9 +354,44 @@ export function DocumentosPage() {
             </div>
 
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-[var(--color-text)]">Proveedor asociado</label>
+              <div className="mb-1.5 flex items-center justify-between">
+                <label className="text-sm font-medium text-[var(--color-text)]">Proveedor asignado</label>
+                {form.watch('proveedor_id') ? (
+                  <button
+                    type="button"
+                    onClick={() => form.setValue('proveedor_id', '')}
+                    className="text-xs text-[var(--color-muted)] hover:text-[var(--color-danger)]"
+                  >
+                    Quitar asignación
+                  </button>
+                ) : null}
+              </div>
+
+              {/* Lista / chips rápidos para seleccionar el proveedor */}
+              {proveedores.length > 0 ? (
+                <div className="mb-2 flex flex-wrap gap-1.5">
+                  {proveedores.map((proveedor) => {
+                    const selected = form.watch('proveedor_id') === proveedor.id
+                    return (
+                      <button
+                        key={proveedor.id}
+                        type="button"
+                        onClick={() => form.setValue('proveedor_id', selected ? '' : proveedor.id)}
+                        className={`rounded-lg border px-2.5 py-1 text-xs font-medium transition ${
+                          selected
+                            ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-white shadow-sm'
+                            : 'border-[var(--color-border)] bg-[var(--color-surface-alt)] text-[var(--color-text)] hover:border-[var(--color-primary)] hover:bg-white'
+                        }`}
+                      >
+                        {proveedor.razon_social}
+                      </button>
+                    )
+                  })}
+                </div>
+              ) : null}
+
               <select {...form.register('proveedor_id')} className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] px-3 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]">
-                <option value="">Sin proveedor</option>
+                <option value="">Sin proveedor (general / interno)</option>
                 {proveedores.map((proveedor) => (
                   <option key={proveedor.id} value={proveedor.id}>{proveedor.razon_social}</option>
                 ))}
